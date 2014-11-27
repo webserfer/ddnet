@@ -1634,7 +1634,7 @@ void CSqlScore::SaveTeamThread(void *pUser)
 
 	int Num = -1;
 
-	if((g_Config.m_SvTeam == 3 || (Team > 0 && Team < 64)) && ((CGameControllerDDRace*)(pData->m_pSqlData->GameServer()->m_pController))->m_Teams.Count(Team) > 0)
+	if((g_Config.m_SvTeam == 3 || (Team > 0 && Team < MAX_CLIENTS)) && ((CGameControllerDDRace*)(pData->m_pSqlData->GameServer()->m_pController))->m_Teams.Count(Team) > 0)
 	{
 		SavedTeam = new CSaveTeam(pData->m_pSqlData->GameServer()->m_pController);
 		Num = SavedTeam->save(Team);
@@ -1777,7 +1777,7 @@ void CSqlScore::LoadTeamThread(void *pUser)
 					{
 
 						int n;
-						for(n = 1; n<64; n++)
+						for(n = 1; n < MAX_CLIENTS; n++)
 						{
 							if(((CGameControllerDDRace*)(pData->m_pSqlData->GameServer()->m_pController))->m_Teams.Count(n) == 0)
 								break;

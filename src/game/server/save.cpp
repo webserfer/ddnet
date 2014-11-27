@@ -209,7 +209,7 @@ CSaveTeam::~CSaveTeam()
 
 int CSaveTeam::save(int Team)
 {
-	if(g_Config.m_SvTeam == 3 || (Team > 0 && Team < 64))
+	if(g_Config.m_SvTeam == 3 || (Team > 0 && Team < MAX_CLIENTS))
 	{
 		CGameTeams* Teams = &(((CGameControllerDDRace*)m_pController)->m_Teams);
 	
@@ -225,7 +225,7 @@ int CSaveTeam::save(int Team)
 
 		SavedTees = new CSaveTee[m_MembersCount];
 		int j = 0;
-		for (int i = 0; i<64; i++)
+		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
 			if(Teams->m_Core.Team(i) == Team)
 			{
@@ -259,7 +259,7 @@ int CSaveTeam::save(int Team)
 
 int CSaveTeam::load(int Team)
 {
-	if(Team > 0 && Team < 64)
+	if(Team > 0 && Team < MAX_CLIENTS)
 	{
 		CGameTeams* Teams = &(((CGameControllerDDRace*)m_pController)->m_Teams);
 
@@ -305,7 +305,7 @@ int CSaveTeam::load(int Team)
 
 int CSaveTeam::MatchPlayer(char name[16])
 {
-	for (int i = 0; i<64; i++)
+	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(str_comp(m_pController->Server()->ClientName(i), name) == 0)
 		{
@@ -356,7 +356,7 @@ char* CSaveTeam::GetString()
 
 int CSaveTeam::LoadString(const char* String)
 {
-	char TeamStats[64];
+	char TeamStats[MAX_CLIENTS];
 	char Switcher[64];
 	char SaveTee[1024];
 
