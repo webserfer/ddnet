@@ -102,7 +102,7 @@ int CEditor::PopupGroup(CEditor *pEditor, CUIRect View)
 	}
 	else
 	{
-		if(pEditor->DoButton_Editor(&s_DeleteButton, "Clean-up game tiles", 0, &Button, 0, "Removes game tiles that aren't based on a layer"))
+		if(pEditor->DoButton_Editor(&s_DeleteButton, "Clean up game tiles", 0, &Button, 0, "Removes game tiles that aren't based on a layer"))
 		{
 			// gather all tile layers
 			array<CLayerTiles*> Layers;
@@ -144,10 +144,10 @@ int CEditor::PopupGroup(CEditor *pEditor, CUIRect View)
 	if(pEditor->GetSelectedGroup()->m_GameGroup && !pEditor->m_Map.m_pTeleLayer)
 	{
 		// new tele layer
-		View.HSplitBottom(10.0f, &View, &Button);
+		View.HSplitBottom(5.0f, &View, &Button);
 		View.HSplitBottom(12.0f, &View, &Button);
 		static int s_NewSwitchLayerButton = 0;
-		if(pEditor->DoButton_Editor(&s_NewSwitchLayerButton, "Add Tele Layer", 0, &Button, 0, "Creates a new tele layer"))
+		if(pEditor->DoButton_Editor(&s_NewSwitchLayerButton, "Add tele layer", 0, &Button, 0, "Creates a new tele layer"))
 		{
 			CLayer *l = new CLayerTele(pEditor->m_Map.m_pGameLayer->m_Width, pEditor->m_Map.m_pGameLayer->m_Height);
 			pEditor->m_Map.MakeTeleLayer(l);
@@ -161,10 +161,10 @@ int CEditor::PopupGroup(CEditor *pEditor, CUIRect View)
 	if(pEditor->GetSelectedGroup()->m_GameGroup && !pEditor->m_Map.m_pSpeedupLayer)
 	{
 		// new speedup layer
-		View.HSplitBottom(10.0f, &View, &Button);
+		View.HSplitBottom(5.0f, &View, &Button);
 		View.HSplitBottom(12.0f, &View, &Button);
 		static int s_NewSwitchLayerButton = 0;
-		if(pEditor->DoButton_Editor(&s_NewSwitchLayerButton, "Add Speedup Layer", 0, &Button, 0, "Creates a new speedup layer"))
+		if(pEditor->DoButton_Editor(&s_NewSwitchLayerButton, "Add speedup layer", 0, &Button, 0, "Creates a new speedup layer"))
 		{
 			CLayer *l = new CLayerSpeedup(pEditor->m_Map.m_pGameLayer->m_Width, pEditor->m_Map.m_pGameLayer->m_Height);
 			pEditor->m_Map.MakeSpeedupLayer(l);
@@ -178,10 +178,10 @@ int CEditor::PopupGroup(CEditor *pEditor, CUIRect View)
 	if(pEditor->GetSelectedGroup()->m_GameGroup && !pEditor->m_Map.m_pTuneLayer)
 		{
 			// new tune layer
-			View.HSplitBottom(10.0f, &View, &Button);
+			View.HSplitBottom(5.0f, &View, &Button);
 			View.HSplitBottom(12.0f, &View, &Button);
 			static int s_NewSwitchLayerButton = 0;
-			if(pEditor->DoButton_Editor(&s_NewSwitchLayerButton, "Add Tune Layer", 0, &Button, 0, "Creates a new tuning layer"))
+			if(pEditor->DoButton_Editor(&s_NewSwitchLayerButton, "Add tune layer", 0, &Button, 0, "Creates a new tuning layer"))
 			{
 				CLayer *l = new CLayerTune(pEditor->m_Map.m_pGameLayer->m_Width, pEditor->m_Map.m_pGameLayer->m_Height);
 				pEditor->m_Map.MakeTuneLayer(l);
@@ -195,10 +195,10 @@ int CEditor::PopupGroup(CEditor *pEditor, CUIRect View)
 	if(pEditor->GetSelectedGroup()->m_GameGroup && !pEditor->m_Map.m_pFrontLayer)
 	{
 		// new force layer
-		View.HSplitBottom(10.0f, &View, &Button);
+		View.HSplitBottom(5.0f, &View, &Button);
 		View.HSplitBottom(12.0f, &View, &Button);
 		static int s_NewFrontLayerButton = 0;
-		if(pEditor->DoButton_Editor(&s_NewFrontLayerButton, "Add Front Layer", 0, &Button, 0, "Creates a new item layer"))
+		if(pEditor->DoButton_Editor(&s_NewFrontLayerButton, "Add front layer", 0, &Button, 0, "Creates a new item layer"))
 		{
 			CLayer *l = new CLayerFront(pEditor->m_Map.m_pGameLayer->m_Width, pEditor->m_Map.m_pGameLayer->m_Height);
 			pEditor->m_Map.MakeFrontLayer(l);
@@ -212,10 +212,10 @@ int CEditor::PopupGroup(CEditor *pEditor, CUIRect View)
 	if(pEditor->GetSelectedGroup()->m_GameGroup && !pEditor->m_Map.m_pSwitchLayer)
 	{
 		// new Switch layer
-		View.HSplitBottom(10.0f, &View, &Button);
+		View.HSplitBottom(5.0f, &View, &Button);
 		View.HSplitBottom(12.0f, &View, &Button);
 		static int s_NewSwitchLayerButton = 0;
-		if(pEditor->DoButton_Editor(&s_NewSwitchLayerButton, "Add Switch Layer", 0, &Button, 0, "Creates a new switch layer"))
+		if(pEditor->DoButton_Editor(&s_NewSwitchLayerButton, "Add switch layer", 0, &Button, 0, "Creates a new switch layer"))
 		{
 			CLayer *l = new CLayerSwitch(pEditor->m_Map.m_pGameLayer->m_Width, pEditor->m_Map.m_pGameLayer->m_Height);
 			pEditor->m_Map.MakeSwitchLayer(l);
@@ -227,7 +227,7 @@ int CEditor::PopupGroup(CEditor *pEditor, CUIRect View)
 	}
 
 	// new quad layer
-	View.HSplitBottom(7.0f, &View, &Button);
+	View.HSplitBottom(5.0f, &View, &Button);
 	View.HSplitBottom(12.0f, &View, &Button);
 	static int s_NewQuadLayerButton = 0;
 	if(pEditor->DoButton_Editor(&s_NewQuadLayerButton, "Add quads layer", 0, &Button, 0, "Creates a new quad layer"))
@@ -624,13 +624,49 @@ int CEditor::PopupSource(CEditor *pEditor, CUIRect View)
 		return 1;
 	}
 
+	// Sound shape button
+	CUIRect ShapeButton;
+	View.HSplitBottom(3.0f, &View, 0x0);
+	View.HSplitBottom(12.0f, &View, &ShapeButton);
+	static int s_ShapeTypeButton = 0;
+
+	static const char *s_aShapeNames[] = {
+		"Rectangle",
+		"Circle"
+	};
+
+	pSource->m_Shape.m_Type = pSource->m_Shape.m_Type%CSoundShape::NUM_SHAPES; // prevent out of array errors
+
+	if(pEditor->DoButton_Editor(&s_ShapeTypeButton, s_aShapeNames[pSource->m_Shape.m_Type], 0, &ShapeButton, 0, "Change shape"))
+	{
+		pSource->m_Shape.m_Type = (pSource->m_Shape.m_Type+1)%CSoundShape::NUM_SHAPES;
+
+		// set default values
+		switch(pSource->m_Shape.m_Type)
+		{
+		case CSoundShape::SHAPE_CIRCLE:
+			{
+				pSource->m_Shape.m_Circle.m_Radius = 1000.0f;
+				break;
+			}
+		case CSoundShape::SHAPE_RECTANGLE:
+			{
+				pSource->m_Shape.m_Rectangle.m_Width = f2fx(1000.0f);
+				pSource->m_Shape.m_Rectangle.m_Height = f2fx(800.0f);
+				break;
+			}
+		}
+	}
+	
+
 	enum
 	{
 		PROP_POS_X=0,
 		PROP_POS_Y,
 		PROP_LOOP,
+		PROP_PAN,
 		PROP_TIME_DELAY,
-		PROP_DISTANCE,
+		PROP_FALLOFF,
 		PROP_POS_ENV,
 		PROP_POS_ENV_OFFSET,
 		PROP_SOUND_ENV,
@@ -642,8 +678,9 @@ int CEditor::PopupSource(CEditor *pEditor, CUIRect View)
 		{"Pos X", pSource->m_Position.x/1000, PROPTYPE_INT_SCROLL, -1000000, 1000000},
 		{"Pos Y", pSource->m_Position.y/1000, PROPTYPE_INT_SCROLL, -1000000, 1000000},
 		{"Loop", pSource->m_Loop, PROPTYPE_BOOL, 0, 1},
+		{"Pan", pSource->m_Pan, PROPTYPE_BOOL, 0, 1},
 		{"Delay", pSource->m_TimeDelay, PROPTYPE_INT_SCROLL, 0, 1000000},
-		{"Distance", pSource->m_FalloffDistance, PROPTYPE_INT_SCROLL, 0, 1000000},
+		{"Falloff", pSource->m_Falloff, PROPTYPE_INT_SCROLL, 0, 255},
 		{"Pos. Env", pSource->m_PosEnv+1, PROPTYPE_INT_STEP, 0, pEditor->m_Map.m_lEnvelopes.size()+1},
 		{"Pos. TO", pSource->m_PosEnvOffset, PROPTYPE_INT_SCROLL, -1000000, 1000000},
 		{"Sound Env", pSource->m_SoundEnv+1, PROPTYPE_INT_STEP, 0, pEditor->m_Map.m_lEnvelopes.size()+1},
@@ -651,6 +688,8 @@ int CEditor::PopupSource(CEditor *pEditor, CUIRect View)
 
 		{0},
 	};
+
+
 
 	static int s_aIds[NUM_PROPS] = {0};
 	int NewVal = 0;
@@ -661,8 +700,9 @@ int CEditor::PopupSource(CEditor *pEditor, CUIRect View)
 	if(Prop == PROP_POS_X) pSource->m_Position.x = NewVal*1000;
 	if(Prop == PROP_POS_Y) pSource->m_Position.y = NewVal*1000;
 	if(Prop == PROP_LOOP) pSource->m_Loop = NewVal;
+	if(Prop == PROP_PAN) pSource->m_Pan = NewVal;
 	if(Prop == PROP_TIME_DELAY) pSource->m_TimeDelay = NewVal;
-	if(Prop == PROP_DISTANCE) pSource->m_FalloffDistance = NewVal;
+	if(Prop == PROP_FALLOFF) pSource->m_Falloff = NewVal;
 	if(Prop == PROP_POS_ENV)
 	{
 		int Index = clamp(NewVal-1, -1, pEditor->m_Map.m_lEnvelopes.size()-1);
@@ -693,6 +733,66 @@ int CEditor::PopupSource(CEditor *pEditor, CUIRect View)
 		}
 	}
 	if(Prop == PROP_SOUND_ENV_OFFSET) pSource->m_SoundEnvOffset = NewVal;
+
+	// source shape properties
+	switch(pSource->m_Shape.m_Type)
+	{
+	case CSoundShape::SHAPE_CIRCLE:
+		{
+			enum
+			{
+				PROP_CIRCLE_RADIUS=0,
+				NUM_CIRCLE_PROPS,
+			};
+			
+			CProperty aCircleProps[] = {
+				{"Radius", pSource->m_Shape.m_Circle.m_Radius, PROPTYPE_INT_SCROLL, 0, 1000000},
+
+				{0},
+			};
+
+			static int s_aCircleIds[NUM_CIRCLE_PROPS] = {0};
+			
+			NewVal = 0;
+			Prop = pEditor->DoProperties(&View, aCircleProps, s_aCircleIds, &NewVal);
+			if(Prop != -1)
+				pEditor->m_Map.m_Modified = true;
+
+			if(Prop == PROP_CIRCLE_RADIUS) pSource->m_Shape.m_Circle.m_Radius = NewVal;
+
+			break;
+		}
+		
+	case CSoundShape::SHAPE_RECTANGLE:
+		{
+			enum
+			{
+				PROP_RECTANGLE_WIDTH=0,
+				PROP_RECTANGLE_HEIGHT,
+				NUM_RECTANGLE_PROPS,
+			};
+			
+			CProperty aRectangleProps[] = {
+				{"Width", pSource->m_Shape.m_Rectangle.m_Width/1024, PROPTYPE_INT_SCROLL, 0, 1000000},
+				{"Height", pSource->m_Shape.m_Rectangle.m_Height/1024, PROPTYPE_INT_SCROLL, 0, 1000000},
+
+				{0},
+			};
+
+			static int s_aRectangleIds[NUM_RECTANGLE_PROPS] = {0};
+			
+			NewVal = 0;
+			Prop = pEditor->DoProperties(&View, aRectangleProps, s_aRectangleIds, &NewVal);
+			if(Prop != -1)
+				pEditor->m_Map.m_Modified = true;
+
+			if(Prop == PROP_RECTANGLE_WIDTH) pSource->m_Shape.m_Rectangle.m_Width = NewVal*1024;
+			if(Prop == PROP_RECTANGLE_HEIGHT) pSource->m_Shape.m_Rectangle.m_Height = NewVal*1024;
+
+			break;
+		}
+	}
+	
 
 	return 0;
 }

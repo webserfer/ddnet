@@ -294,8 +294,9 @@ void CServer::CClient::Reset()
 
 CServer::CServer()
 {
-	for(int i = 0; i < MAX_CLIENTS+1; i++)
-		m_aDemoRecorder[i] = CDemoRecorder(&m_SnapshotDelta);
+	for(int i = 0; i < MAX_CLIENTS; i++)
+		m_aDemoRecorder[i] = CDemoRecorder(&m_SnapshotDelta, true);
+	m_aDemoRecorder[MAX_CLIENTS] = CDemoRecorder(&m_SnapshotDelta, false);
 
 	m_TickSpeed = SERVER_TICK_SPEED;
 
@@ -600,8 +601,12 @@ void CServer::DoSnapshot()
 		GameServer()->OnSnap(-1);
 		SnapshotSize = m_SnapshotBuilder.Finish(aData);
 
+		// for antiping: if the projectile netobjects contains extra data, this is removed and the original content restored before recording demo
+		unsigned char aExtraInfoRemoved[CSnapshot::MAX_SIZE];
+		mem_copy(aExtraInfoRemoved, aData, SnapshotSize);
+		SnapshotRemoveExtraInfo(aExtraInfoRemoved);
 		// write snapshot
-		m_aDemoRecorder[MAX_CLIENTS].RecordSnapshot(Tick(), aData, SnapshotSize);
+		m_aDemoRecorder[MAX_CLIENTS].RecordSnapshot(Tick(), aExtraInfoRemoved, SnapshotSize);
 	}
 
 	// create snapshots for all clients
@@ -640,7 +645,14 @@ void CServer::DoSnapshot()
 			SnapshotSize = m_SnapshotBuilder.Finish(pData);
 
 			if(m_aDemoRecorder[i].IsRecording())
-				m_aDemoRecorder[i].RecordSnapshot(Tick(), aData, SnapshotSize);
+			{
+				// for antiping: if the projectile netobjects contains extra data, this is removed and the original content restored before recording demo
+				unsigned char aExtraInfoRemoved[CSnapshot::MAX_SIZE];
+				mem_copy(aExtraInfoRemoved, aData, SnapshotSize);
+				SnapshotRemoveExtraInfo(aExtraInfoRemoved);
+				// write snapshot
+				m_aDemoRecorder[i].RecordSnapshot(Tick(), aExtraInfoRemoved, SnapshotSize);
+			}
 
 			Crc = pData->Crc();
 
@@ -1815,7 +1827,7 @@ void CServer::SaveDemo(int ClientID, float Time)
 {
 	if(IsRecording(ClientID))
 	{
-		m_aDemoRecorder[ClientID].Stop();
+		m_aDemoRecorder[ClientID].Stop(true);
 
 		// rename the demo
 		char aOldFilename[256];
@@ -1832,7 +1844,7 @@ void CServer::StartRecord(int ClientID)
 	{
 		char aFilename[128];
 		str_format(aFilename, sizeof(aFilename), "demos/%s_%d_%d_tmp.demo", m_aCurrentMap, g_Config.m_SvPort, ClientID);
-		m_aDemoRecorder[ClientID].Start(Storage(), Console(), aFilename, GameServer()->NetVersion(), m_aCurrentMap, m_CurrentMapCrc, "client");
+		m_aDemoRecorder[ClientID].Start(Storage(), Console(), aFilename, GameServer()->NetVersion(), m_aCurrentMap, m_CurrentMapCrc, "client", m_CurrentMapSize, m_pCurrentMapData);
 	}
 }
 

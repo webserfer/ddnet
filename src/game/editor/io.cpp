@@ -198,6 +198,19 @@ void editor_load_old(DATAFILE *df, MAP *map)
 	}
 }*/
 
+// compatibility with old sound layers
+struct CSoundSource_DEPRECATED
+{
+	CPoint m_Position;
+	int m_Loop;
+	int m_TimeDelay; // in s
+	int m_FalloffDistance;
+	int m_PosEnv;
+	int m_PosEnvOffset;
+	int m_SoundEnv;
+	int m_SoundEnvOffset;
+};
+
 int CEditor::Save(const char *pFilename)
 {
 	return m_Map.Save(Kernel()->RequestInterface<IStorage>(), pFilename);
@@ -811,6 +824,34 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 										pTiles->m_pTiles[i].m_Index += ENTITY_OFFSET;
 								}
 							}
+
+							// Convert race stoppers to ddrace stoppers
+							/*if(pTiles->m_Game)
+							{
+								for(int i = 0; i < pTiles->m_Width*pTiles->m_Height; i++)
+								{
+									if(pTiles->m_pTiles[i].m_Index == 29)
+									{
+										pTiles->m_pTiles[i].m_Index = 60;
+										pTiles->m_pTiles[i].m_Flags = TILEFLAG_HFLIP|TILEFLAG_VFLIP|TILEFLAG_ROTATE;
+									}
+									else if(pTiles->m_pTiles[i].m_Index == 30)
+									{
+										pTiles->m_pTiles[i].m_Index = 60;
+										pTiles->m_pTiles[i].m_Flags = TILEFLAG_ROTATE;
+									}
+									else if(pTiles->m_pTiles[i].m_Index == 31)
+									{
+										pTiles->m_pTiles[i].m_Index = 60;
+										pTiles->m_pTiles[i].m_Flags = TILEFLAG_HFLIP|TILEFLAG_VFLIP;
+									}
+									else if(pTiles->m_pTiles[i].m_Index == 32)
+									{
+										pTiles->m_pTiles[i].m_Index = 60;
+										pTiles->m_pTiles[i].m_Flags = 0;
+									}
+								}
+							}*/
 						}
 
 						DataFile.UnloadData(pTilemapItem->m_Data);
@@ -996,6 +1037,9 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 					else if(pLayerItem->m_Type == LAYERTYPE_SOUNDS)
 					{
 						CMapItemLayerSounds *pSoundsItem = (CMapItemLayerSounds *)pLayerItem;
+						if(pSoundsItem->m_Version < 1 || pSoundsItem->m_Version > CMapItemLayerSounds::CURRENT_VERSION)
+							continue;
+
 						CLayerSounds *pSounds = new CLayerSounds;
 						pSounds->m_pEditor = m_pEditor;
 						pLayer = pSounds;
@@ -1014,6 +1058,53 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 						pGroup->AddLayer(pSounds);
 						pSounds->m_lSources.set_size(pSoundsItem->m_NumSources);
 						mem_copy(pSounds->m_lSources.base_ptr(), pData, sizeof(CSoundSource)*pSoundsItem->m_NumSources);
+						DataFile.UnloadData(pSoundsItem->m_Data);
+					}
+					else if(pLayerItem->m_Type == LAYERTYPE_SOUNDS_DEPRECATED)
+					{
+						// compatibility with old sound layers
+						CMapItemLayerSounds *pSoundsItem = (CMapItemLayerSounds *)pLayerItem;
+						if(pSoundsItem->m_Version < 1 || pSoundsItem->m_Version > CMapItemLayerSounds::CURRENT_VERSION)
+							continue;
+
+						CLayerSounds *pSounds = new CLayerSounds;
+						pSounds->m_pEditor = m_pEditor;
+						pLayer = pSounds;
+						pSounds->m_Sound = pSoundsItem->m_Sound;
+
+						// validate m_Sound
+						if(pSounds->m_Sound < -1 || pSounds->m_Sound >= m_lSounds.size())
+							pSounds->m_Sound = -1;
+
+						// load layer name
+						if(pSoundsItem->m_Version >= 1)
+							IntsToStr(pSoundsItem->m_aName, sizeof(pSounds->m_aName)/sizeof(int), pSounds->m_aName);
+
+						// load data
+						CSoundSource_DEPRECATED *pData = (CSoundSource_DEPRECATED *)DataFile.GetDataSwapped(pSoundsItem->m_Data);
+						pGroup->AddLayer(pSounds);
+						pSounds->m_lSources.set_size(pSoundsItem->m_NumSources);
+
+						for(int i = 0; i < pSoundsItem->m_NumSources; i++)
+						{
+							CSoundSource_DEPRECATED *pOldSource = &pData[i];
+
+							CSoundSource &Source = pSounds->m_lSources[i];
+							Source.m_Position = pOldSource->m_Position;
+							Source.m_Loop = pOldSource->m_Loop;
+							Source.m_Pan = true;
+							Source.m_TimeDelay = pOldSource->m_TimeDelay;
+							Source.m_Falloff = 0;
+
+							Source.m_PosEnv = pOldSource->m_PosEnv;
+							Source.m_PosEnvOffset = pOldSource->m_PosEnvOffset;
+							Source.m_SoundEnv = pOldSource->m_SoundEnv;
+							Source.m_SoundEnvOffset = pOldSource->m_SoundEnvOffset;
+
+							Source.m_Shape.m_Type = CSoundShape::SHAPE_CIRCLE;
+							Source.m_Shape.m_Circle.m_Radius = pOldSource->m_FalloffDistance;
+						}
+
 						DataFile.UnloadData(pSoundsItem->m_Data);
 					}
 

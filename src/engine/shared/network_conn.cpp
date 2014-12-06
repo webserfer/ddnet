@@ -190,7 +190,7 @@ void CNetConnection::Disconnect(const char *pReason)
 			SendControl(NET_CTRLMSG_CLOSE, 0, 0);
 
 		m_ErrorString[0] = 0;
-		if(pReason)
+		if(pReason && pReason != m_ErrorString)
 			str_copy(m_ErrorString, pReason, sizeof(m_ErrorString));
 	}
 
@@ -249,8 +249,10 @@ int CNetConnection::Feed(CNetPacketConstruct *pPacket, NETADDR *pAddr)
 					mem_copy(&nAddr, pAddr, sizeof(nAddr));
 					nAddr.port = 0;
 					m_PeerAddr.port = 0;
+#ifndef FUZZING
 					if(net_addr_comp(&m_PeerAddr, &nAddr) == 0 && time_get() - m_LastUpdateTime < time_freq() * 3)
 						return 0;
+#endif
 
 					// send response and init connection
 					Reset();
