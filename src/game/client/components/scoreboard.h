@@ -4,11 +4,22 @@
 #define GAME_CLIENT_COMPONENTS_SCOREBOARD_H
 #include <game/client/component.h>
 
+enum
+{
+	NEUTRAL,
+	LOWER,
+	UPPER,
+	BIG0,
+	BIG1,
+	BIG2,
+	BIG3,
+};
+
 class CScoreboard : public CComponent
 {
 	void RenderGoals(float x, float y, float w);
 	void RenderSpectators(float x, float y, float w);
-	void RenderScoreboard(float x, float y, float w, int Team, const char *pTitle);
+	void RenderScoreboard(float x, float y, float w, int Team, const char *pTitle, int maxRendered = 8, int type = NEUTRAL);
 	void RenderRecordingNotification(float x);
 	void RenderLocalTime(float x);
 

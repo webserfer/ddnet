@@ -144,33 +144,10 @@ void CScoreboard::RenderSpectators(float x, float y, float w)
 	TextRender()->TextEx(&Cursor, aBuffer, -1);
 }
 
-void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const char *pTitle)
+void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const char *pTitle, int maxRendered, int type)
 {
 	if(Team == TEAM_SPECTATORS)
 		return;
-
-	bool lower16 = false;
-	bool upper16 = false;
-	bool lower24 = false;
-	bool upper24 = false;
-	bool lower32 = false;
-	bool upper32 = false;
-
-	if(Team == -3)
-		upper16 = true;
-	else if(Team == -4)
-		lower32 = true;
-	else if(Team == -5)
-		upper32 = true;
-	else if(Team == -6)
-		lower16 = true;
-	else if(Team == -7)
-		lower24 = true;
-	else if(Team == -8)
-		upper24 = true;
-
-	if(Team < -1)
-		Team = 0;
 
 	float h = 760.0f;
 
@@ -179,12 +156,14 @@ void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const ch
 	Graphics()->TextureSet(-1);
 	Graphics()->QuadsBegin();
 	Graphics()->SetColor(0.0f, 0.0f, 0.0f, 0.5f);
-	if(upper16 || upper32 || upper24)
+	if(type == UPPER || type == BIG3)
 		RenderTools()->DrawRoundRectExt(x, y, w, h, 17.0f, 10);
-	else if(lower16 || lower32 || lower24)
+	else if(type == LOWER || type == BIG0)
 		RenderTools()->DrawRoundRectExt(x, y, w, h, 17.0f, 5);
-	else
+	else if(type == NEUTRAL)
 		RenderTools()->DrawRoundRect(x, y, w, h, 17.0f);
+	else
+		RenderTools()->DrawRoundRectExt(x, y, w, h, 17.0f, 0);
 	Graphics()->QuadsEnd();
 
 	// render title
@@ -235,7 +214,7 @@ void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const ch
 
 	float tw;
 
-	if (!lower16 && !lower32 && !lower24)
+	if(type == UPPER)
 	{
 		tw = TextRender()->TextWidth(0, TitleFontsize, aBuf, -1);
 		TextRender()->Text(0, x+w-tw-20.0f, y, TitleFontsize, aBuf, -1);
@@ -283,6 +262,16 @@ void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const ch
 	float CountryOffset = PingOffset-(LineHeight-Spacing-TeeSizeMod*5.0f)*2.0f, CountryLength = (LineHeight-Spacing-TeeSizeMod*5.0f)*2.0f;
 	float ClanOffset = x+370.0f, ClanLength = 230.0f-CountryLength;
 
+	if (type >= BIG0 && type <= BIG3)
+	{
+		ScoreOffset = x+10.0f; ScoreLength = TextRender()->TextWidth(0, 16.0f, "00:00:0", -1);
+		TeeOffset = ScoreOffset+ScoreLength; TeeLength = 60*TeeSizeMod;
+		NameOffset = TeeOffset+TeeLength; NameLength = 200.0f-TeeLength;
+		PingOffset = x+300.0f; PingLength = 25.0f;
+		CountryOffset = PingOffset-(LineHeight-Spacing-TeeSizeMod*5.0f)*2.0f; CountryLength = (LineHeight-Spacing-TeeSizeMod*5.0f)*2.0f;
+		ClanOffset = x+170.0f; ClanLength = 130.0f-CountryLength;
+	}
+
 	// render headlines
 	y += 50.0f;
 	float HeadlineFontsize = 22.0f;
@@ -292,8 +281,11 @@ void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const ch
 
 	TextRender()->Text(0, NameOffset, y, HeadlineFontsize, Localize("Name"), -1);
 
-	tw = TextRender()->TextWidth(0, HeadlineFontsize, Localize("Clan"), -1);
-	TextRender()->Text(0, ClanOffset+ClanLength/2-tw/2, y, HeadlineFontsize, Localize("Clan"), -1);
+	if (type < BIG0 || type > BIG3)
+	{
+		tw = TextRender()->TextWidth(0, HeadlineFontsize, Localize("Clan"), -1);
+		TextRender()->Text(0, ClanOffset+ClanLength/2-tw/2, y, HeadlineFontsize, Localize("Clan"), -1);
+	}
 
 	tw = TextRender()->TextWidth(0, HeadlineFontsize, Localize("Ping"), -1);
 	TextRender()->Text(0, PingOffset+PingLength-tw, y, HeadlineFontsize, Localize("Ping"), -1);
@@ -308,12 +300,14 @@ void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const ch
 	CTextCursor Cursor;
 
 	int rendered = 0;
-	if (upper16)
-		rendered = -16;
-	if (upper32)
-		rendered = -32;
-	if (upper24)
-		rendered = -24;
+	if (type == UPPER)
+		rendered = -maxRendered;
+	else if (type == BIG1)
+		rendered = -maxRendered;
+	else if (type == BIG2)
+		rendered = -2 * maxRendered;
+	else if (type == BIG3)
+		rendered = -3 * maxRendered;
 
 	int OldDDTeam = -1;
 
@@ -462,10 +456,13 @@ void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const ch
 		}
 
 		// clan
-		tw = TextRender()->TextWidth(0, FontSize, m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, -1);
-		TextRender()->SetCursor(&Cursor, ClanOffset+ClanLength/2-tw/2, y+Spacing, FontSize, TEXTFLAG_RENDER|TEXTFLAG_STOP_AT_END);
-		Cursor.m_LineWidth = ClanLength;
-		TextRender()->TextEx(&Cursor, m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, -1);
+		if (type < BIG0 || type > BIG3)
+		{
+			tw = TextRender()->TextWidth(0, FontSize, m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, -1);
+			TextRender()->SetCursor(&Cursor, ClanOffset+ClanLength/2-tw/2, y+Spacing, FontSize, TEXTFLAG_RENDER|TEXTFLAG_STOP_AT_END);
+			Cursor.m_LineWidth = ClanLength;
+			TextRender()->TextEx(&Cursor, m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, -1);
+		}
 
 		// country flag
 		vec4 Color(1.0f, 1.0f, 1.0f, 0.5f);
@@ -480,13 +477,8 @@ void CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const ch
 		TextRender()->TextEx(&Cursor, aBuf, -1);
 
 		y += LineHeight+Spacing;
-		if (lower32 || upper32) {
-			if (rendered == 32) break;
-		} else if (lower24 || upper24) {
-			if (rendered == 24) break;
-		} else {
-			if (rendered == 16) break;
-		}
+		if (rendered == maxRendered)
+			break;
 	}
 }
 
@@ -552,27 +544,35 @@ void CScoreboard::OnRender()
 
 	Graphics()->MapScreen(0, 0, Width, Height);
 
+	m_pClient->m_Snap.m_aTeamSize[0] = 256;
+
 	float w = 700.0f;
 
 	if(m_pClient->m_Snap.m_pGameInfoObj)
 	{
 		if(!(m_pClient->m_Snap.m_pGameInfoObj->m_GameFlags&GAMEFLAG_TEAMS))
 		{
-			if(m_pClient->m_Snap.m_aTeamSize[0] > 48)
+			if(m_pClient->m_Snap.m_aTeamSize[0] > 64)
 			{
-				RenderScoreboard(Width/2-w, 150.0f, w, -4, 0);
-				RenderScoreboard(Width/2, 150.0f, w, -5, "");
+				RenderScoreboard(Width/2-2*w/2, 150.0f, w/2, 0, 0, 32, BIG0);
+				RenderScoreboard(Width/2-w/2, 150.0f, w/2, 0, "", 32, BIG1);
+				RenderScoreboard(Width/2, 150.0f, w/2, 0, "", 32, BIG2);
+				RenderScoreboard(Width/2+w/2, 150.0f, w/2, 0, "", 32, BIG3);
+			} else if(m_pClient->m_Snap.m_aTeamSize[0] > 48)
+			{
+				RenderScoreboard(Width/2-w, 150.0f, w, 0, 0, 32, LOWER);
+				RenderScoreboard(Width/2, 150.0f, w, 0, "", 32, UPPER);
 			} else if(m_pClient->m_Snap.m_aTeamSize[0] > 32)
 			{
-				RenderScoreboard(Width/2-w, 150.0f, w, -7, 0);
-				RenderScoreboard(Width/2, 150.0f, w, -8, "");
+				RenderScoreboard(Width/2-w, 150.0f, w, 0, 0, 24, LOWER);
+				RenderScoreboard(Width/2, 150.0f, w, 0, "", 24, UPPER);
 			} else if(m_pClient->m_Snap.m_aTeamSize[0] > 16)
 			{
-				RenderScoreboard(Width/2-w, 150.0f, w, -6, 0);
-				RenderScoreboard(Width/2, 150.0f, w, -3, "");
+				RenderScoreboard(Width/2-w, 150.0f, w, 0, 0, 16, LOWER);
+				RenderScoreboard(Width/2, 150.0f, w, 0, "", 16, UPPER);
 			} else
 			{
-				RenderScoreboard(Width/2-w/2, 150.0f, w, 0, 0);
+				RenderScoreboard(Width/2-w/2, 150.0f, w, 0, 0, 16, NEUTRAL);
 			}
 		}
 		else
