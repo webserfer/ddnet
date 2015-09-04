@@ -166,20 +166,66 @@ void CSqlScore::Init()
 			// create tables
 			char aBuf[1024];
 
-			str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_race (Map VARCHAR(128) BINARY NOT NULL, Name VARCHAR(%d) BINARY NOT NULL, Timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , Time FLOAT DEFAULT 0, Server CHAR(3), cp1 FLOAT DEFAULT 0, cp2 FLOAT DEFAULT 0, cp3 FLOAT DEFAULT 0, cp4 FLOAT DEFAULT 0, cp5 FLOAT DEFAULT 0, cp6 FLOAT DEFAULT 0, cp7 FLOAT DEFAULT 0, cp8 FLOAT DEFAULT 0, cp9 FLOAT DEFAULT 0, cp10 FLOAT DEFAULT 0, cp11 FLOAT DEFAULT 0, cp12 FLOAT DEFAULT 0, cp13 FLOAT DEFAULT 0, cp14 FLOAT DEFAULT 0, cp15 FLOAT DEFAULT 0, cp16 FLOAT DEFAULT 0, cp17 FLOAT DEFAULT 0, cp18 FLOAT DEFAULT 0, cp19 FLOAT DEFAULT 0, cp20 FLOAT DEFAULT 0, cp21 FLOAT DEFAULT 0, cp22 FLOAT DEFAULT 0, cp23 FLOAT DEFAULT 0, cp24 FLOAT DEFAULT 0, cp25 FLOAT DEFAULT 0, KEY (Map, Name)) CHARACTER SET utf8 ;", m_pPrefix, MAX_NAME_LENGTH);
-			m_pStatement->execute(aBuf);
+			if(g_Config.m_SvOldDBScheme)
+			{
+				str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_race (Map VARCHAR(128) BINARY NOT NULL, Name VARCHAR(%d) BINARY NOT NULL, Timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , Time FLOAT DEFAULT 0, Server CHAR(3), cp1 FLOAT DEFAULT 0, cp2 FLOAT DEFAULT 0, cp3 FLOAT DEFAULT 0, cp4 FLOAT DEFAULT 0, cp5 FLOAT DEFAULT 0, cp6 FLOAT DEFAULT 0, cp7 FLOAT DEFAULT 0, cp8 FLOAT DEFAULT 0, cp9 FLOAT DEFAULT 0, cp10 FLOAT DEFAULT 0, cp11 FLOAT DEFAULT 0, cp12 FLOAT DEFAULT 0, cp13 FLOAT DEFAULT 0, cp14 FLOAT DEFAULT 0, cp15 FLOAT DEFAULT 0, cp16 FLOAT DEFAULT 0, cp17 FLOAT DEFAULT 0, cp18 FLOAT DEFAULT 0, cp19 FLOAT DEFAULT 0, cp20 FLOAT DEFAULT 0, cp21 FLOAT DEFAULT 0, cp22 FLOAT DEFAULT 0, cp23 FLOAT DEFAULT 0, cp24 FLOAT DEFAULT 0, cp25 FLOAT DEFAULT 0, KEY (Map, Name)) CHARACTER SET utf8 ;", m_pPrefix, MAX_NAME_LENGTH);
+				m_pStatement->execute(aBuf);
 
-			str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_teamrace (Map VARCHAR(128) BINARY NOT NULL, Name VARCHAR(%d) BINARY NOT NULL, Timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, Time FLOAT DEFAULT 0, ID VARBINARY(16) NOT NULL, KEY Map (Map)) CHARACTER SET utf8 ;", m_pPrefix, MAX_NAME_LENGTH);
-			m_pStatement->execute(aBuf);
+				str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_teamrace (Map VARCHAR(128) BINARY NOT NULL, Name VARCHAR(%d) BINARY NOT NULL, Timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, Time FLOAT DEFAULT 0, ID VARBINARY(16) NOT NULL, KEY Map (Map)) CHARACTER SET utf8 ;", m_pPrefix, MAX_NAME_LENGTH);
+				m_pStatement->execute(aBuf);
 
-			str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_maps (Map VARCHAR(128) BINARY NOT NULL, Server VARCHAR(32) BINARY NOT NULL, Mapper VARCHAR(128) BINARY NOT NULL, Points INT DEFAULT 0, Stars INT DEFAULT 0, Timestamp TIMESTAMP, UNIQUE KEY Map (Map)) CHARACTER SET utf8 ;", m_pPrefix);
-			m_pStatement->execute(aBuf);
+				str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_maps (Map VARCHAR(128) BINARY NOT NULL, Server VARCHAR(32) BINARY NOT NULL, Mapper VARCHAR(128) BINARY NOT NULL, Points INT DEFAULT 0, Stars INT DEFAULT 0, Timestamp TIMESTAMP, UNIQUE KEY Map (Map)) CHARACTER SET utf8 ;", m_pPrefix);
+				m_pStatement->execute(aBuf);
 
-			str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_saves (Savegame TEXT CHARACTER SET utf8 BINARY NOT NULL, Map VARCHAR(128) BINARY NOT NULL, Code VARCHAR(128) BINARY NOT NULL, Timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, Server CHAR(3), UNIQUE KEY (Map, Code)) CHARACTER SET utf8 ;", m_pPrefix);
-			m_pStatement->execute(aBuf);
+				str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_saves (Savegame TEXT CHARACTER SET utf8 BINARY NOT NULL, Map VARCHAR(128) BINARY NOT NULL, Code VARCHAR(128) BINARY NOT NULL, Timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, Server CHAR(3), UNIQUE KEY (Map, Code)) CHARACTER SET utf8 ;", m_pPrefix);
+				m_pStatement->execute(aBuf);
 
-			str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_points (Name VARCHAR(%d) BINARY NOT NULL, Points INT DEFAULT 0, UNIQUE KEY Name (Name)) CHARACTER SET utf8 ;", m_pPrefix, MAX_NAME_LENGTH);
-			m_pStatement->execute(aBuf);
+				str_format(aBuf, sizeof(aBuf), "CREATE TABLE IF NOT EXISTS %s_points (Name VARCHAR(%d) BINARY NOT NULL, Points INT DEFAULT 0, UNIQUE KEY Name (Name)) CHARACTER SET utf8 ;", m_pPrefix, MAX_NAME_LENGTH);
+				m_pStatement->execute(aBuf);
+			}
+			else
+			{
+				str_format(aBuf, sizeof(aBuf), "create table if not exists %s_finishes ("
+						"FinishID int unsigned not null primary key auto_increment, " // 4 B
+						"MapID smallint unsigned not null, "   // 2 B
+						"Player varchar(%d) binary not null, " // 2-17 B
+						"TeamID int unsigned, "                // 4 B, can be null
+						"CountryID tinyint unsigned, "         // 1 B
+						"Timestamp timestamp not null, "       // 4 B, until 2038
+						"Time float not null"                  // 4 B
+					") character set utf8;", m_pPrefix, MAX_NAME_LENGTH);
+				m_pStatement->execute(aBuf);
+
+				str_format(aBuf, sizeof(aBuf), "create table if not exists %s_finish_cps ("
+						"FinishID int unsigned not null primary key, " // 4 B
+						"cp1 float default 0, cp2 float default 0, cp3 float default 0, "
+						"cp4 float default 0, cp5 float default 0, cp6 float default 0, "
+						"cp7 float default 0, cp8 float default 0, cp9 float default 0, "
+						"cp10 float default 0, cp11 float default 0, cp12 float default 0, "
+						"cp13 float default 0, cp14 float default 0, cp15 float default 0, "
+						"cp16 float default 0, cp17 float default 0, cp18 float default 0, "
+						"cp19 float default 0, cp20 float default 0, cp21 float default 0, "
+						"cp22 float default 0, cp23 float default 0, cp24 float default 0, "
+						"cp25 float default 0" // 25 * 4 B
+					");", m_pPrefix);
+				m_pStatement->execute(aBuf);
+
+				str_format(aBuf, sizeof(aBuf), "create table if not exists %s_points ("
+						"Player varchar(%d) binary not null, " // 2-17 B
+						"Points int not null"                  // 4 B
+					") character set utf8;", m_pPrefix, MAX_NAME_LENGTH);
+				m_pStatement->execute(aBuf);
+
+				// TODO: What if a rank is inserted but MapID doesn't exist yet?!
+				str_format(aBuf, sizeof(aBuf), "create table if not exists %s_maps ("
+						"MapID varchar(%d) binary not null, " // 2-17 B
+						"Points int not null"                  // 4 B
+					") character set utf8;", m_pPrefix, MAX_NAME_LENGTH);
+				m_pStatement->execute(aBuf);
+
+				str_format(aBuf, sizeof(aBuf), "create table if not exists %s_saves (Savegame text character set utf8 binary not null, Map varchar(128) binary not null, Code varchar(128) binary not null, Timestamp timestamp not null default current_timestamp, Server char(3), unique key (Map, Code)) character set utf8 ;", m_pPrefix);
+				m_pStatement->execute(aBuf);
+			}
 
 			dbg_msg("SQL", "Tables were created successfully");
 

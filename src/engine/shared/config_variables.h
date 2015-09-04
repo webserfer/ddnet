@@ -222,6 +222,7 @@ MACRO_CONFIG_STR(SvSqlServerName, sv_sql_servername, 4, "UNK", CFGFLAG_SERVER, "
 MACRO_CONFIG_STR(SvSqlPrefix, sv_sql_prefix, 16, "record", CFGFLAG_SERVER, "SQL Database table prefix")
 MACRO_CONFIG_INT(SvSaveGames, sv_savegames, 1, 0, 1, CFGFLAG_SERVER, "Enables savegames (/save and /load)")
 MACRO_CONFIG_INT(SvSaveGamesDelay, sv_savegames_delay, 60, 0, 10000, CFGFLAG_SERVER, "Delay in seconds for loading a savegame")
+MACRO_CONFIG_INT(SvOldDBScheme, sv_old_db_scheme, 1, 0, 1, CFGFLAG_SERVER, "Use the old SQL database scheme instead of the new, better one (incompatible with old one)")
 #endif
 
 MACRO_CONFIG_INT(SvDDRaceRules, sv_ddrace_rules, 1, 0, 1, CFGFLAG_SERVER, "Whether the default mod rules are displayed or not")
