@@ -20,7 +20,7 @@ test_script:
   - cmd: cmake --build build32 --config Debug --target run_tests
     #- cmd: cmake --build build64 --config Debug --target run_tests
     #- cmd: cmake --build build32 --config Release --target run_tests
-  - cmd: build32\Debug\testrunner --gtest_filter=NonDivisor --gtest_repeat=1000
+  - cmd: build32\Debug\testrunner --gtest_filter=Async.NonDivisor --gtest_repeat=800
     #- cmd: cmake --build build64 --config Release --target run_tests
     #- cmd: build32\Release\DDNet-Server shutdown
     #- cmd: build64\Release\DDNet-Server shutdown
