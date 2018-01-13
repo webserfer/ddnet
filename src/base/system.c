@@ -179,14 +179,12 @@ static void logger_stdout_sync(const char *line, void *user)
 }
 #endif
 
-#if !defined(CONF_FAMILY_WINDOWS)
 static void logger_stdout_finish(void *user)
 {
 	ASYNCIO *logfile = (ASYNCIO *)user;
 	aio_wait(logfile);
 	aio_free(logfile);
 }
-#endif
 
 static void logger_file_finish(void *user)
 {
