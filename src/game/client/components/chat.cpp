@@ -56,6 +56,7 @@ void CChat::OnReset()
 		m_aLines[i].m_aName[0] = 0;
 		m_aLines[i].m_Friend = false;
 		m_aLines[i].m_TextContainerIndex = -1;
+		m_aLines[i].m_Emojis.clear();
 	}
 	m_PrevScoreBoardShowed = false;
 	m_PrevShowChat = false;
@@ -523,6 +524,7 @@ void CChat::AddLine(int ClientID, int Team, const char *pLine)
 		m_aLines[m_CurrentLine].m_ClientID = ClientID;
 		m_aLines[m_CurrentLine].m_Team = Team;
 		m_aLines[m_CurrentLine].m_NameColor = -2;
+		m_aLines[m_CurrentLine].m_Emojis.clear();
 
 		if(m_aLines[m_CurrentLine].m_TextContainerIndex != -1)
 			TextRender()->DeleteTextContainer(m_aLines[m_CurrentLine].m_TextContainerIndex);
@@ -594,6 +596,58 @@ void CChat::AddLine(int ClientID, int Team, const char *pLine)
 		}
 
 		m_aLines[m_CurrentLine].m_Friend = ClientID >= 0 ? m_pClient->m_aClients[ClientID].m_Friend : false;
+
+		char aBuffer[64];
+		int Length = str_length(m_aLines[m_CurrentLine].m_aText);
+
+		// lookup for aliases of emojis
+		for(int i = 0; i < Length; )
+		{
+			const char *pIndex1 = str_find(m_aLines[m_CurrentLine].m_aText + i, ":");
+			if (pIndex1 == NULL) break;
+
+			const char *pIndex2 = str_find(pIndex1 + 1, ":");
+			if (pIndex2 == NULL) break;
+
+			i = pIndex2 - m_aLines[m_CurrentLine].m_aText;
+
+			// prevents buffer overflow
+			if ((size_t)(pIndex2 - pIndex1 + 2) > sizeof(aBuffer)) continue;
+			str_copy(aBuffer, pIndex1, pIndex2 - pIndex1 + 2); // extra place for ":\0"
+
+			// skip "::" and those aliases containing space
+			if (str_length(aBuffer) <= 2 || str_find(aBuffer, " ")) continue;
+
+			CEmojis::CEmoji const *pEmoji = m_pClient->m_pEmojis->GetByAlias(aBuffer);
+			if (pEmoji == NULL) continue;
+			// to prevent usage of the same ":"
+			i++;
+
+			CEmojis::CEmojiInfo Info;
+			Info.index = pIndex1 - m_aLines[m_CurrentLine].m_aText;
+			Info.length = str_length(aBuffer);
+			Info.m_ID = pEmoji->m_ID;
+			m_aLines[m_CurrentLine].m_Emojis.add(Info);
+		}
+
+		// lookup for utf emojis
+		for(int i = 0; i < m_pClient->m_pEmojis->Num(); i++)
+		{
+			int Offset = 0;
+			CEmojis::CEmoji const *pEmoji = m_pClient->m_pEmojis->GetByIndex(i);
+			const char *pResult = str_find(m_aLines[m_CurrentLine].m_aText + Offset, pEmoji->m_UTF);
+			while (pResult != NULL)
+			{
+				CEmojis::CEmojiInfo Info;
+				Info.index = pResult - m_aLines[m_CurrentLine].m_aText;
+				Info.length = str_length(pEmoji->m_UTF);
+				Info.m_ID = pEmoji->m_ID;
+				m_aLines[m_CurrentLine].m_Emojis.add(Info);
+				Offset = Info.index + Info.length;
+				pResult = str_find(m_aLines[m_CurrentLine].m_aText + Offset, pEmoji->m_UTF);
+			}
+		}
+		m_aLines[m_CurrentLine].m_Emojis.sort_range();
 
 		char aBuf[1024];
 		str_format(aBuf, sizeof(aBuf), "%s%s", m_aLines[m_CurrentLine].m_aName, m_aLines[m_CurrentLine].m_aText);
@@ -902,26 +956,167 @@ void CChat::OnRender()
 	int64 Now = time_get();
 	float HeightLimit = m_pClient->m_pScoreboard->Active() ? 230.0f : m_Show ? 50.0f : 200.0f;
 	int OffsetType = m_pClient->m_pScoreboard->Active() ? 1 : 0;
+
 	for(int i = 0; i < MAX_LINES; i++)
 	{
+
 		int r = ((m_CurrentLine-i)+MAX_LINES)%MAX_LINES;
 		if(Now > m_aLines[r].m_Time+16*time_freq() && !m_Show)
 			break;
 
+<<<<<<< HEAD
+=======
+		char aName[64] = "";
+		if(g_Config.m_ClShowIDs && m_aLines[r].m_ClientID != -1 && m_aLines[r].m_aName[0] != '\0')
+		{
+			if (m_aLines[r].m_ClientID >= 10)
+				str_format(aName, sizeof(aName),"%d: ", m_aLines[r].m_ClientID);
+			else
+				str_format(aName, sizeof(aName)," %d: ", m_aLines[r].m_ClientID);
+			str_append(aName, m_aLines[r].m_aName,sizeof(aName));
+		}
+		else
+		{
+			str_copy(aName, m_aLines[r].m_aName, sizeof(aName));
+		}
+
+		// get the y offset (calculate it if we haven't done that yet)
+		if(m_aLines[r].m_YOffset[OffsetType] < 0.0f)
+		{
+			TextRender()->SetCursor(&Cursor, Begin, 0.0f, FontSize, 0);
+			Cursor.m_LineWidth = LineWidth;
+			TextRender()->TextEx(&Cursor, "♥ ", -1);
+			TextRender()->TextEx(&Cursor, aName, -1);
+
+			int index = 0;
+
+			for(int j = 0; j < m_aLines[r].m_Emojis.size(); j++)
+			{
+				CEmojis::CEmojiInfo info = m_aLines[r].m_Emojis[j];
+				TextRender()->TextEx(&Cursor, &m_aLines[r].m_aText[index], info.index - index);
+				Cursor.m_X += Cursor.m_FontSize + (Cursor.m_EmojiX - Cursor.m_X);
+
+				if(Begin + Cursor.m_LineWidth < Cursor.m_X)
+				{
+					Cursor.m_X = Cursor.m_StartX;
+					Cursor.m_Y += Cursor.m_FontSize;
+					Cursor.m_LineCount++;
+				}
+				index = info.index + info.length;
+			}
+
+			TextRender()->TextEx(&Cursor, &m_aLines[r].m_aText[index], -1);
+
+			m_aLines[r].m_YOffset[OffsetType] = Cursor.m_Y + Cursor.m_FontSize;
+		}
+
+>>>>>>> parent of 151da9af9... Remove Emojis
 		y -= m_aLines[r].m_YOffset[OffsetType];
 
 		// cut off if msgs waste too much space
 		if(y < HeightLimit)
 			break;
 
+<<<<<<< HEAD
 		float Blend = Now > m_aLines[r].m_Time + 14 * time_freq() && !m_Show ? 1.0f - (Now - m_aLines[r].m_Time - 14 * time_freq()) / (2.0f*time_freq()) : 1.0f;
 
 		if(m_aLines[r].m_TextContainerIndex != -1)
+=======
+		float Blend = Now > m_aLines[r].m_Time+14*time_freq() && !m_Show ? 1.0f-(Now-m_aLines[r].m_Time-14*time_freq())/(2.0f*time_freq()) : 1.0f;
+
+		// reset the cursor
+		TextRender()->SetCursor(&Cursor, Begin, y, FontSize, TEXTFLAG_RENDER);
+		Cursor.m_LineWidth = LineWidth;
+
+		if(g_Config.m_ClMessageFriend)
+		{
+			vec3 rgb = HslToRgb(vec3(g_Config.m_ClMessageFriendHue / 255.0f, g_Config.m_ClMessageFriendSat / 255.0f, g_Config.m_ClMessageFriendLht / 255.0f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, m_aLines[r].m_Friend ? Blend : 0); //Less ugly hack to align messages
+			TextRender()->TextEx(&Cursor, "♥ ", -1);
+		}
+
+		// render name
+		if (m_aLines[r].m_ClientID == -1) // system
+		{
+			vec3 rgb = HslToRgb(vec3(g_Config.m_ClMessageSystemHue / 255.0f, g_Config.m_ClMessageSystemSat / 255.0f, g_Config.m_ClMessageSystemLht / 255.0f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, Blend);
+		}
+		else if (m_aLines[r].m_ClientID == -2) // client
+		{
+			vec3 rgb = HslToRgb(vec3(g_Config.m_ClMessageClientHue / 255.0f, g_Config.m_ClMessageClientSat / 255.0f, g_Config.m_ClMessageClientLht / 255.0f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, Blend);
+		}
+		else if (m_aLines[r].m_Team)
+		{
+			vec3 rgb = CalculateNameColor(vec3(g_Config.m_ClMessageTeamHue / 255.0f, g_Config.m_ClMessageTeamSat / 255.0f, g_Config.m_ClMessageTeamLht / 255.0f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, Blend); // team message
+		}
+		else if(m_aLines[r].m_NameColor == TEAM_RED)
+			TextRender()->TextColor(1.0f, 0.5f, 0.5f, Blend); // red
+		else if(m_aLines[r].m_NameColor == TEAM_BLUE)
+			TextRender()->TextColor(0.7f, 0.7f, 1.0f, Blend); // blue
+		else if(m_aLines[r].m_NameColor == TEAM_SPECTATORS)
+			TextRender()->TextColor(0.75f, 0.5f, 0.75f, Blend); // spectator
+		else if(m_aLines[r].m_ClientID >= 0 && g_Config.m_ClChatTeamColors && m_pClient->m_Teams.Team(m_aLines[r].m_ClientID))
+		{
+			vec3 rgb = HslToRgb(vec3(m_pClient->m_Teams.Team(m_aLines[r].m_ClientID) / 64.0f, 1.0f, 0.75f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, Blend);
+		}
+		else
+			TextRender()->TextColor(0.8f, 0.8f, 0.8f, Blend);
+
+		TextRender()->TextEx(&Cursor, aName, -1);
+		// render line
+		if (m_aLines[r].m_ClientID == -1) // system
+		{
+			vec3 rgb = HslToRgb(vec3(g_Config.m_ClMessageSystemHue / 255.0f, g_Config.m_ClMessageSystemSat / 255.0f, g_Config.m_ClMessageSystemLht / 255.0f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, Blend);
+		}
+		else if (m_aLines[r].m_ClientID == -2) // client
+		{
+			vec3 rgb = HslToRgb(vec3(g_Config.m_ClMessageClientHue / 255.0f, g_Config.m_ClMessageClientSat / 255.0f, g_Config.m_ClMessageClientLht / 255.0f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, Blend);
+		}
+		else if (m_aLines[r].m_Highlighted) // highlighted
+>>>>>>> parent of 151da9af9... Remove Emojis
 		{
 			STextRenderColor TextOutline(0.f, 0.f, 0.f, 0.3f * Blend);
 			STextRenderColor Text(1.f, 1.f, 1.f, Blend);
 			TextRender()->RenderTextContainer(m_aLines[r].m_TextContainerIndex, &Text, &TextOutline, 0, y - m_aLines[r].m_TextYOffset);
 		}
+<<<<<<< HEAD
+=======
+		else if (m_aLines[r].m_Team) // team message
+		{
+			vec3 rgb = HslToRgb(vec3(g_Config.m_ClMessageTeamHue / 255.0f, g_Config.m_ClMessageTeamSat / 255.0f, g_Config.m_ClMessageTeamLht / 255.0f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, Blend);
+		}
+		else // regular message
+		{
+			vec3 rgb = HslToRgb(vec3(g_Config.m_ClMessageHue / 255.0f, g_Config.m_ClMessageSat / 255.0f, g_Config.m_ClMessageLht / 255.0f));
+			TextRender()->TextColor(rgb.r, rgb.g, rgb.b, Blend);
+		}
+
+		int index = 0;
+
+		for(int j = 0; j < m_aLines[r].m_Emojis.size(); j++)
+		{
+			CEmojis::CEmojiInfo info = m_aLines[r].m_Emojis[j];
+			TextRender()->TextEx(&Cursor, &m_aLines[r].m_aText[index], info.index - index);
+			m_pClient->m_pEmojis->Render(info.m_ID, (Cursor.m_EmojiX) + Cursor.m_FontSize/2, Cursor.m_Y + Cursor.m_FontSize-2, Cursor.m_FontSize, Cursor.m_FontSize);
+			Cursor.m_X += Cursor.m_FontSize + (Cursor.m_EmojiX - Cursor.m_X);
+
+			if(Begin + Cursor.m_LineWidth < Cursor.m_X)
+			{
+				Cursor.m_X = Cursor.m_StartX;
+				Cursor.m_Y += Cursor.m_FontSize;
+				Cursor.m_LineCount++;
+			}
+			index = info.index + info.length;
+		}
+
+		TextRender()->TextEx(&Cursor, &m_aLines[r].m_aText[index], -1);
+>>>>>>> parent of 151da9af9... Remove Emojis
 	}
 
 #if defined(__ANDROID__)

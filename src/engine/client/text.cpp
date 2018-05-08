@@ -856,6 +856,8 @@ public:
 			}
 		}
 
+		pCursor->m_EmojiX = DrawX;
+
 		while(pCurrent < pEnd && (pCursor->m_MaxLines < 1 || LineCount <= pCursor->m_MaxLines))
 		{
 			int NewLine = 0;
@@ -941,6 +943,7 @@ public:
 						Graphics()->QuadsDrawTL(&QuadItem, 1);
 					}
 
+					pCursor->m_EmojiX = DrawX + (pChr->m_OffsetX + pChr->m_Width) * Size;
 					DrawX += Advance*Size;
 					pCursor->m_CharCount++;
 				}

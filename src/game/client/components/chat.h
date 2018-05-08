@@ -2,9 +2,11 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #ifndef GAME_CLIENT_COMPONENTS_CHAT_H
 #define GAME_CLIENT_COMPONENTS_CHAT_H
+#include <base/tl/sorted_array.h>
 #include <engine/shared/ringbuffer.h>
 #include <game/client/component.h>
 #include <game/client/lineinput.h>
+#include <game/client/components/emojis.h>
 
 class CChat : public CComponent
 {
@@ -29,6 +31,7 @@ class CChat : public CComponent
 
 		int m_TextContainerIndex;
 		float m_TextYOffset;
+		sorted_array<CEmojis::CEmojiInfo> m_Emojis;
 	};
 
 	bool m_PrevScoreBoardShowed;
