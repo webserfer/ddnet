@@ -5,8 +5,9 @@
 # - http://www.unicode.org/Public/<VERSION>/ucd/UnicodeData.txt
 #
 # If executed as a script, it will generate the contents of the file
-# `src/base/confusables_data.h`.
+# `src/base/unicode/confusables_data.h`.
 
+# FIXME: Pull out generic stuff to unicode_utils.py
 import csv
 
 def confusables():
@@ -21,8 +22,10 @@ UNICODEDATA_FIELDS = (
     "General_Category",
     "Canonical_Combining_Class",
     "Bidi_Class",
-    "Decomposition",
-    "Numeric",
+    "Decomposition_Type",
+    "Decomposition_Mapping",
+    "Numeric_Type",
+    "Numeric_Mapping",
     "Bidi_Mirrored",
     "Unicode_1_Name",
     "ISO_Comment",
@@ -47,7 +50,8 @@ def generate_decompositions():
 
     category = lambda x: {unhex(u["Value"]) for u in ud if u["General_Category"].startswith(x)}
 
-    nfd = {unhex(u["Value"]): unhex_sequence(u["Decomposition"]) for u in ud}
+    # TODO: Is this correct? They changed the decompositioning format
+    nfd = {unhex(u["Value"]): unhex_sequence(u["Decomposition_Type"]) for u in ud}
     nfd = {k: v for k, v in nfd.items() if v}
     con = {unhex(c["Value"]): unhex_sequence(c["Target"]) for c in con}
 
